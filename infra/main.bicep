@@ -2,7 +2,6 @@ param location string = 'southeastasia'
 param prefix string
 param environment string
 
-// Build environment-specific names
 var namePrefix = toLower('${environment}-${prefix}')
 
 module app './modules/app.bicep' = {
