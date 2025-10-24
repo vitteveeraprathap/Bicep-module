@@ -1,0 +1,6 @@
+{
+  "parameters": {
+    "prefix": { "value": "veera" },
+    "environment": { "value": "prod" }
+  }
+}

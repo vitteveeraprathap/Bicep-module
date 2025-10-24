@@ -1,0 +1,54 @@
+name: Deploy Azure Infra
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select environment (dev, qa, prod)"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Setup Bicep
+        run: |
+          az bicep install
+          az bicep upgrade
+
+      - name: Validate Template
+        run: |
+          az deployment group validate \
+            --resource-group sandbox1 \
+            --template-file infra/main.bicep \
+            --parameters @infra/parameters.${{ github.event.inputs.environment }}.json
+
+      - name: Deploy Template
+        run: |
+          az deployment group create \
+            --name "deploy-${{ github.event.inputs.environment }}-${{ github.run_id }}" \
+            --resource-group sandbox1 \
+            --template-file infra/main.bicep \
+            --parameters @infra/parameters.${{ github.event.inputs.environment }}.json
+
+      - name: Show Outputs
+        run: |
+          az deployment group show \
+            --resource-group sandbox1 \
+            --name "deploy-${{ github.event.inputs.environment }}-${{ github.run_id }}" \
+            --query properties.outputs
